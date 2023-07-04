@@ -1,5 +1,5 @@
-import { StyleSheet, Image, Text, View, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { StyleSheet, Image, Text, View, TouchableOpacity, FlatList } from 'react-native'
+import React,{useState, useEffect} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AntDesign } from '@expo/vector-icons';
@@ -7,9 +7,37 @@ import VerticalDivider from '../components/verticalDivider';
 import { useNavigation } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
+const imageUrls = [ 
+  
+];
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+
+  const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const fetchedImages = [];
+      for (const url of imageUrls){
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+
+        if(url.endsWith('.png')){
+          fetchedImages.push(`data:image/png;base64,${Buffer.from(buffer).toString('base64')}`);
+        }
+        else if(url.endsWith('.jpg') || url.endsWith('.jpeg')){
+          fetchedImages.push(`data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`);
+        }
+        else{
+          fetchImages.push(url);
+        }
+      }
+      setImages(fetchedImages);
+    };
+
+    fetchImages();
+  },[]);
   return (
     <SafeAreaView style={styles.maincontainer}> 
       <View style={styles.container}>
@@ -22,8 +50,13 @@ const HomeScreen = () => {
           {/* Profile Done */}
 
         <View style={styles.profilePicContainer}>
-          <Image source={require('../assets/profile.png')}
+          <FlatList
+          data = {images}
+          renderItem={({item}) => 
+          <Image source={{uri: item}}
             style={styles.profileimage}
+          />}
+          keyExtractor={(item) => item}
           />
           <Text style={{fontSize: 20, fontWeight: 700, alignSelf: 'center'}}>
             Steve Lawrence
